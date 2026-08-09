@@ -220,13 +220,13 @@ async function callOpenAIAudio(prompt, base64Audio = null, mimeType = null) {
 async function executeLLMWithFallback(prompt, base64Audio, mimeType, validatorFn) {
   let lastError = null;
 
-  // 1. Intento 1: Gemini 2.5 Flash (8s timeout)
+  // 1. Intento 1: Gemini 2.0 Flash (8s timeout)
   try {
-    const text = await callGeminiAudio(prompt, base64Audio, mimeType, 'gemini-2.5-flash');
+    const text = await callGeminiAudio(prompt, base64Audio, mimeType, 'gemini-2.0-flash');
     const parsed = validatorFn(text);
-    if (parsed) return { result: parsed, provider: 'gemini-2.5-flash' };
+    if (parsed) return { result: parsed, provider: 'gemini-2.0-flash' };
   } catch (err1) {
-    console.warn('⚠️ [Voice LLM] Intento 1 (Gemini 2.5 Flash) falló:', err1.message);
+    console.warn('⚠️ [Voice LLM] Intento 1 (Gemini 2.0 Flash) falló:', err1.message);
     lastError = err1;
   }
 
