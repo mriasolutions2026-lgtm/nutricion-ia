@@ -690,14 +690,14 @@ app.post('/api/voice/assistant', optionalAuth, async (req, res) => {
 const PUBLIC_DIR = path.join(__dirname, 'www');
 app.use(express.static(PUBLIC_DIR));
 
-// Carga inicial SPA
-app.get('*', (req, res) => {
+// Carga inicial SPA (Compatible con Express 5)
+app.use((req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
 // Inicializar Servidor Express
-app.listen(PORT, () => {
-  console.log(`\n🚀 [SaaS Server] Ejecutándose en: http://localhost:${PORT}/`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 [SaaS Server] Ejecutándose en puerto ${PORT} (0.0.0.0)`);
   console.log(`📡 [SaaS Server] Estado de Redis: ${queueService.isRedisActive() ? 'CONECTADO (BullMQ activo)' : 'CAÍDO (Fallback síncrono activo)'}`);
   console.log(`📂 [SaaS Server] Carpeta pública: ${PUBLIC_DIR}\n`);
 });
