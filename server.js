@@ -74,6 +74,26 @@ async function optionalAuth(req, res, next) {
 }
 
 // ==========================================
+// HEALTH CHECK — UptimeRobot / Keep-Alive
+// ==========================================
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    app: 'NutricionLu API',
+    version: '1.10.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()) + 's',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ==========================================
 // ENDPOINTS DE AUTENTICACIÓN (PROXY)
 // ==========================================
 
