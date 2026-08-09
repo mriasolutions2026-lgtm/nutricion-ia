@@ -299,7 +299,7 @@ async function callChatbotGemini(userText) {
         }
         try {
             const apiKey = localStorage.getItem('niaGeminiKey') || (window.DEFAULT_CLIENT_GEMINI_KEY || 'AQ.Ab8RN6ItiqORVmWfguoQUvre7-9sEo7xTvB7pX1ubcpuPv0RQQ');
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             
             const systemPrompt = `Sos Nutri, el asistente nutricional clínico inteligente de la aplicación. Respondé de manera científica, empática y motivadora en español de Argentina con voseo sutil ("tenés", "podés"). Respuestas breves (máximo 150 palabras).`;
             const historyText = chatHistory.map(h => `${h.role === 'user' ? 'Paciente' : 'Nutri'}: ${h.content}`).join('\n');
