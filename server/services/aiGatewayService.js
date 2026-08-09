@@ -150,16 +150,16 @@ module.exports = {
     if (cached) return cached;
 
     // Registrar auditoría de inicio
-    const reqId = await loggingService.logAiRequest(userId, prompt, 'gemini-2.5-flash');
+    const reqId = await loggingService.logAiRequest(userId, prompt, 'gemini-2.0-flash');
 
     let responseText = '';
-    let modelUsed = 'gemini-2.5-flash';
+    let modelUsed = 'gemini-2.0-flash';
     let isFallback = false;
     let errorMsg = null;
 
     try {
       // Intentar modelo principal (Gemini)
-      responseText = await callGeminiAPI(prompt, 'gemini-2.5-flash', base64Image, mimeType);
+      responseText = await callGeminiAPI(prompt, 'gemini-2.0-flash', base64Image, mimeType);
     } catch (e) {
       console.warn('⚠️ Gemini falló en análisis de imagen. Intentando fallback a OpenAI (gpt-4o-mini)...', e.message);
       errorMsg = e.message;
@@ -203,10 +203,10 @@ module.exports = {
     if (cached) return cached;
 
     // Registrar solicitud
-    const reqId = await loggingService.logAiRequest(userId, userText, 'gemini-2.5-flash');
+    const reqId = await loggingService.logAiRequest(userId, userText, 'gemini-2.0-flash');
 
     let responseText = '';
-    let modelUsed = 'gemini-2.5-flash';
+    let modelUsed = 'gemini-2.0-flash';
     let isFallback = false;
     let errorMsg = null;
 
@@ -257,7 +257,7 @@ REGLAS DE INTERACCIÓN:
       const finalPrompt = `${systemPrompt}\n\nAquí está el contexto previo:\n${historyContext}\nPaciente: ${userText}\nNutri:`;
 
       // Intentar Gemini
-      responseText = await callGeminiAPI(finalPrompt, 'gemini-2.5-flash');
+      responseText = await callGeminiAPI(finalPrompt, 'gemini-2.0-flash');
     } catch (e) {
       console.warn('⚠️ Gemini falló en Chat. Intentando fallback a OpenAI (gpt-4o-mini)...', e.message);
       errorMsg = e.message;
@@ -292,7 +292,7 @@ REGLAS DE INTERACCIÓN:
   async getCompletion(prompt, base64Image = null, mimeType = null) {
     let responseText = '';
     try {
-      responseText = await callGeminiAPI(prompt, 'gemini-2.5-flash', base64Image, mimeType);
+      responseText = await callGeminiAPI(prompt, 'gemini-2.0-flash', base64Image, mimeType);
     } catch (e) {
       console.warn('⚠️ Gemini falló en consulta general. Intentando fallback a OpenAI...', e.message);
       try {
