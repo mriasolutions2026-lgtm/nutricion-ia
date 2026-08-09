@@ -36,7 +36,7 @@ module.exports = {
           .from('ai_requests')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
-          .eq('model_requested', 'gemini-2.5-flash') // O cualquier chat consult
+          .in('model_requested', ['gemini-2.0-flash', 'gemini-2.5-flash']) // O cualquier chat consult
           .gte('created_at', `${today}T00:00:00.000Z`);
 
         if (error) throw error;
@@ -54,7 +54,7 @@ module.exports = {
           .from('ai_requests')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
-          .eq('model_requested', 'gemini-2.5-flash-vision') // Identificador para análisis de imagen
+          .in('model_requested', ['gemini-2.0-flash', 'gemini-2.5-flash-vision']) // Identificador para análisis de imagen
           .gte('created_at', `${today}T00:00:00.000Z`);
 
         if (error) throw error;
