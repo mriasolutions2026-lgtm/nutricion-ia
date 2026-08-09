@@ -2062,10 +2062,10 @@ Respondé ÚNICAMENTE con un objeto JSON válido con el siguiente formato, sin b
         throw new Error(errJson.error || `Backend status: ${resp.status}`);
       }
     } catch (backendErr) {
-      console.warn('Backend no disponible, ejecutando fallback directo con Gemini 2.5 Flash...', backendErr.message);
+      console.warn('Backend no disponible, ejecutando fallback directo con Gemini 2.0 Flash...', backendErr.message);
       
       const apiKey = localStorage.getItem('niaGeminiKey') || (window.DEFAULT_CLIENT_GEMINI_KEY || 'AQ.Ab8RN6ItiqORVmWfguoQUvre7-9sEo7xTvB7pX1ubcpuPv0RQQ');
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
       
       const body = {
         contents: [{ parts: parts }],
@@ -3139,6 +3139,9 @@ function loadApp() {
         localStorage.setItem('niaSheetsUrl', localStorage.getItem('paSheetsUrl'));
     }
 
+    // Resetear diario a las 00:01 hs si corresponde
+    niaCheckMidnightRollover();
+
     const sp = localStorage.getItem('nutriProfile');
     if (sp) {
         profile = JSON.parse(sp);
@@ -3714,7 +3717,7 @@ Respondé ÚNICAMENTE con un objeto JSON válido con el siguiente formato, sin b
         throw backendErr;
       }
       const apiKey = localStorage.getItem('niaGeminiKey');
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
       const body = {
         contents: [{
           parts: [
@@ -3814,7 +3817,7 @@ Respondé ÚNICAMENTE con un objeto JSON válido con el siguiente formato, sin b
         throw backendErr;
       }
       const apiKey = localStorage.getItem('niaGeminiKey');
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
       const body = {
         contents: [{
           parts: [{ text: prompt }]
@@ -4631,11 +4634,27 @@ function submitVoiceTextManual() {
   stopVoiceRecording();
   const inp = document.getElementById('voice-manual-text-input');
   const text = inp ? inp.value.trim() : '';
-  if (!text) {
-    showMsg('Por favor dictá o escribí un texto antes de procesar.');
+
+  // Si hay texto transcrito por Web Speech API, lo usamos directamente
+  if (text) {
+    sendVoiceAudioToBackend(null, null, text);
     return;
   }
-  sendVoiceAudioToBackend(null, null, text);
+
+  // Si no hay texto, verificamos si tenemos audio grabado en audioChunks
+  if (window.voiceState.audioChunks && window.voiceState.audioChunks.length > 0) {
+    showMsg('Procesando audio grabado...');
+    const mimeType = window.voiceState.mediaRecorder?.mimeType || 'audio/webm';
+    const audioBlob = new Blob(window.voiceState.audioChunks, { type: mimeType });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64data = reader.result.split(',')[1];
+      sendVoiceAudioToBackend(base64data, mimeType, null);
+    };
+    reader.readAsDataURL(audioBlob);
+  } else {
+    showMsg('Por favor dictá o escribí un texto antes de procesar.');
+  }
 }
 
 async function sendVoiceAudioToBackend(base64Audio, mimeType, textTranscript = null) {
@@ -4680,7 +4699,7 @@ async function sendVoiceAudioToBackend(base64Audio, mimeType, textTranscript = n
     }
 
   } catch (err) {
-    console.warn(`⚠️ Backend voz /api/voice/${type} no disponible o 404 (${err.message}). Ejecutando fallback cliente directo con Gemini 2.5 Flash...`);
+    console.warn(`⚠️ Backend voz /api/voice/${type} no disponible o 404 (${err.message}). Ejecutando fallback cliente directo con Gemini 2.0 Flash...`);
     try {
       const data = await processClientSideVoiceFallback(type, base64Audio, mimeType, textTranscript);
       window.voiceState.sourceTranscript = data.source_transcript || textTranscript || 'Carga por voz';
@@ -4708,7 +4727,7 @@ async function sendVoiceAudioToBackend(base64Audio, mimeType, textTranscript = n
 // Fallback cliente directo para procesamiento de voz cuando el backend no está disponible en servidores estáticos
 async function processClientSideVoiceFallback(type, base64Audio, mimeType, textTranscript) {
   const apiKey = localStorage.getItem('niaGeminiKey') || (window.DEFAULT_CLIENT_GEMINI_KEY || 'AQ.Ab8RN6ItiqORVmWfguoQUvre7-9sEo7xTvB7pX1ubcpuPv0RQQ');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   let prompt = '';
   if (type === 'food') {
@@ -4774,16 +4793,16 @@ Respondé ÚNICAMENTE con un objeto JSON válido:
     const items = Array.isArray(parsedJSON) ? parsedJSON : (parsedJSON.items || [
       { food_name: textTranscript || 'Comida ingresada', quantity: 1, unit: 'porción', meal_type: 'almuerzo', calories: 200, protein_g: 10, carbs_g: 20, fat_g: 5 }
     ]);
-    return { success: true, provider: 'gemini-2.5-flash-client', source_transcript: textTranscript || 'Carga por voz', items };
+    return { success: true, provider: 'gemini-2.0-flash-client', source_transcript: textTranscript || 'Carga por voz', items };
   } else if (type === 'wearable') {
     const metrics = Array.isArray(parsedJSON) ? parsedJSON : (parsedJSON.metrics || [
       { metric_type: 'actividad_fisica', value: 30, unit: 'min' }
     ]);
-    return { success: true, provider: 'gemini-2.5-flash-client', source_transcript: textTranscript || 'Carga por voz', metrics };
+    return { success: true, provider: 'gemini-2.0-flash-client', source_transcript: textTranscript || 'Carga por voz', metrics };
   } else {
     return {
       success: true,
-      provider: 'gemini-2.5-flash-client',
+      provider: 'gemini-2.0-flash-client',
       user_message: textTranscript || '',
       assistant_response: parsedJSON.assistant_response || rawText || 'Hola, ¿en qué te puedo ayudar hoy con tu alimentación?',
       in_scope: parsedJSON.in_scope !== false
