@@ -1,0 +1,36 @@
+# Headers para Netlify — NutricionLu
+# Necesarios para que el Service Worker funcione correctamente
+
+# Service Worker: no cachear para que siempre se actualice
+/service-worker.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+# Manifest: sin caché agresiva
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# Assets estáticos: cachear con versión
+/style.css
+  Cache-Control: public, max-age=31536000, immutable
+/app-core.js
+  Cache-Control: public, max-age=31536000, immutable
+/app-features.js
+  Cache-Control: public, max-age=31536000, immutable
+/app-new-features.js
+  Cache-Control: public, max-age=31536000, immutable
+/knowledge.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# Imágenes
+/granada.png
+  Cache-Control: public, max-age=86400
+/icons/*
+  Cache-Control: public, max-age=86400
+
+# Headers de seguridad globales
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=self, microphone=(), geolocation=()

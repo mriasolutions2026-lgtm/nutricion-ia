@@ -1,0 +1,50 @@
+{
+  "name": "nutricionlu",
+  "version": "1.10.0",
+  "description": "Asistente nutricional con IA - PWA + Android + iOS",
+  "main": "index.html",
+  "scripts": {
+    "start": "node build.js && node server.js",
+    "serve": "node server.js",
+    "serve:python": "python -m http.server 3000",
+    "build": "node build.js",
+    "test": "jest",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "node build.js && npx cap copy && npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios"
+  },
+  "keywords": [
+    "nutrition",
+    "ai",
+    "health",
+    "pwa"
+  ],
+  "author": "NutricionLu",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/camera": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/local-notifications": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.108.2",
+    "bullmq": "^5.79.1",
+    "cordova-plugin-health": "^3.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "ioredis": "^5.11.1",
+    "lru-cache": "^11.5.1",
+    "nodemailer": "^9.0.1",
+    "pdfkit": "^0.19.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "jest": "^30.4.2"
+  }
+}

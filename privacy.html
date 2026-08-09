@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidad — NutricionLu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fdf5f5; --text: #1a1015; --text-muted: #9a7a82;
+      --green: #c81d3a; --glass: rgba(255,255,255,0.72);
+      --radius: 18px; --max-width: 720px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1.25rem 4rem;
+    }
+    .container { max-width: var(--max-width); margin: 0 auto; }
+    header {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 2.5rem; padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(200,29,58,0.12);
+    }
+    .logo {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(135deg, #c81d3a, #e8829a);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header p { font-size: 0.8rem; color: var(--text-muted); }
+    h2 {
+      font-size: 1.25rem; font-weight: 700;
+      color: var(--green); margin: 2rem 0 0.75rem;
+    }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+    p { margin-bottom: 0.875rem; font-size: 0.95rem; color: #3a2028; }
+    ul { padding-left: 1.5rem; margin-bottom: 0.875rem; }
+    li { font-size: 0.95rem; color: #3a2028; margin-bottom: 0.375rem; }
+    .highlight {
+      background: rgba(200,29,58,0.06);
+      border-left: 3px solid var(--green);
+      border-radius: 0 12px 12px 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+    }
+    .update-date {
+      font-size: 0.82rem; color: var(--text-muted);
+      background: var(--glass); border-radius: 8px;
+      padding: 6px 12px; display: inline-block; margin-bottom: 1.5rem;
+      border: 1px solid rgba(200,29,58,0.1);
+    }
+    footer {
+      margin-top: 3rem; padding-top: 1.5rem;
+      border-top: 1px solid rgba(200,29,58,0.12);
+      text-align: center; font-size: 0.82rem; color: var(--text-muted);
+    }
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--green); color: white;
+      padding: 8px 16px; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 600;
+      text-decoration: none; margin-bottom: 2rem;
+      transition: opacity 0.2s;
+    }
+    .back-btn:hover { opacity: 0.88; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">N</div>
+      <div>
+        <h1>NutricionLu</h1>
+        <p>Asistente Nutricional con Inteligencia Artificial</p>
+      </div>
+    </header>
+
+    <a href="./" class="back-btn">← Volver a la app</a>
+
+    <h2 style="margin-top:0">Política de Privacidad</h2>
+    <p class="update-date">📅 Última actualización: Mayo 2026 · Versión 3.0</p>
+
+    <div class="highlight">
+      <strong>Resumen en términos simples:</strong> NutricionLu procesa tus datos <strong>únicamente en tu propio dispositivo</strong>. No tenemos servidores propios, no recolectamos datos personales, y no vendemos ni compartimos tu información con terceros.
+    </div>
+
+    <h2>1. Quiénes somos</h2>
+    <p>NutricionLu es una aplicación web progresiva (PWA) de asistencia nutricional impulsada por inteligencia artificial. La app opera de forma independiente en el dispositivo del usuario.</p>
+    <p>Desarrollada por profesionales de la nutrición y tecnología como herramienta educativa de apoyo al seguimiento alimentario. <strong>No es un servicio médico ni reemplaza la consulta con un profesional de la salud.</strong></p>
+
+    <h2>2. Datos que recopilamos</h2>
+    <h3>2.1 Datos que guardás vos en tu dispositivo</h3>
+    <p>La siguiente información se almacena <em>exclusivamente en tu dispositivo</em> usando <code>localStorage</code> del navegador:</p>
+    <ul>
+      <li>Perfil personal: nombre, edad, sexo, peso, altura, dieta y objetivos</li>
+      <li>Registro de comidas (descripción, calorías, macros estimados)</li>
+      <li>Actividad física registrada</li>
+      <li>Suplementos y recordatorios configurados</li>
+      <li>Datos de hidratación diaria</li>
+      <li>Medidas de composición corporal</li>
+      <li>Logros y rachas de uso</li>
+      <li>Preferencia de modo oscuro/claro</li>
+    </ul>
+    <p>Estos datos <strong>nunca abandonan tu dispositivo</strong> a menos que vos los exportes voluntariamente (ej. PDF o Google Sheets).</p>
+
+    <h3>2.2 Fotos de comidas</h3>
+    <p>Las fotos que subís para análisis se envían directamente a la API de Google Gemini para su procesamiento. <strong>No se almacenan en ningún servidor nuestro.</strong> Las imágenes son procesadas en tiempo real y descartadas inmediatamente por Google según sus políticas de uso de la API.</p>
+
+    <h3>2.3 Datos que NO recopilamos</h3>
+    <ul>
+      <li>No recopilamos datos de uso, analytics ni telemetría</li>
+      <li>No creamos cuentas de usuario ni almacenamos contraseñas</li>
+      <li>No usamos cookies de rastreo</li>
+      <li>No accedemos a tu ubicación, contactos ni micrófono</li>
+      <li>No compartimos datos con terceros con fines publicitarios</li>
+    </ul>
+
+    <h2>3. Servicios de terceros utilizados</h2>
+
+    <h3>3.1 Google Gemini API</h3>
+    <p>El análisis de comidas utiliza la API de Google Gemini (IA generativa). Las descripciones de comidas y/o imágenes se envían a los servidores de Google para su procesamiento.</p>
+    <p>Política de privacidad de Google: <a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></p>
+
+    <h3>3.2 Google Fonts</h3>
+    <p>Usamos Google Fonts para cargar la tipografía DM Sans e Inter. Google puede registrar solicitudes de fuentes como parte de su operación normal.</p>
+
+    <h3>3.3 Google Sheets (opcional)</h3>
+    <p>Si decidís conectar tu planilla de Google Sheets, los datos de comidas se sincronizarán con tu cuenta de Google según tus propias credenciales. NutricionLu no accede a tus credenciales de Google directamente.</p>
+
+    <h2>4. Cámara y archivos</h2>
+    <p>La app puede solicitar permiso para acceder a tu cámara o galería de fotos con el único fin de fotografiar comidas para análisis nutricional. Este permiso es opcional y puede ser revocado en cualquier momento desde la configuración de tu dispositivo.</p>
+
+    <h2>5. Notificaciones</h2>
+    <p>Si activás los recordatorios de suplementos, la app puede solicitar permiso para enviar notificaciones locales. Estas notificaciones son procesadas completamente en tu dispositivo y no requieren conexión a internet.</p>
+
+    <h2>6. Menores de edad</h2>
+    <p>NutricionLu no está diseñada para usuarios menores de 16 años. Si sos padre/madre/tutor y creés que tu hijo menor usó la app, podés eliminar todos los datos borrando el caché del navegador o desinstalando la app.</p>
+
+    <h2>7. Retención y eliminación de datos</h2>
+    <p>Todos tus datos se almacenan localmente en tu dispositivo y podés eliminarlos en cualquier momento:</p>
+    <ul>
+      <li>Desde la app: <em>Perfil → Reiniciar perfil</em></li>
+      <li>Desde el navegador: Borrar datos del sitio en Configuración del navegador</li>
+      <li>Desinstalando la app (en caso de PWA instalada)</li>
+    </ul>
+
+    <h2>8. Seguridad</h2>
+    <p>La aplicación se sirve exclusivamente via HTTPS. Los datos locales están protegidos por el sandboxing del navegador o del sistema operativo móvil. No tenemos acceso remoto a tus datos.</p>
+
+    <h2>9. Cambios a esta política</h2>
+    <p>Si realizamos cambios materiales a esta política, actualizaremos la fecha de "última actualización" al inicio de este documento. Te recomendamos revisarla periódicamente.</p>
+
+    <h2>10. Contacto</h2>
+    <p>Si tenés preguntas sobre esta política de privacidad o sobre el manejo de tus datos, podés contactarnos a través de la sección de Chat IA dentro de la app.</p>
+
+    <div class="highlight">
+      <strong>⚕️ Aviso médico importante:</strong> NutricionLu es una herramienta educativa y de seguimiento personal. La información proporcionada no constituye asesoramiento médico o nutricional profesional. Consultá siempre con un profesional de la salud antes de realizar cambios significativos en tu dieta o rutina de ejercicios.
+    </div>
+
+    <footer>
+      <p>© 2026 NutricionLu · Todos los derechos reservados</p>
+      <p style="margin-top:6px"><a href="./">Volver a la app</a></p>
+    </footer>
+  </div>
+</body>
+</html>
