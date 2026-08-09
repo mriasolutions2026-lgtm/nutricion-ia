@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background gradient: crimson to rose -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c81d3a"/>
+      <stop offset="100%" stop-color="#e8829a"/>
+    </linearGradient>
+    <!-- White inner glow -->
+    <radialGradient id="glowGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <!-- Clip path for circular shape -->
+    <clipPath id="circleClip">
+      <circle cx="256" cy="256" r="256"/>
+    </clipPath>
+  </defs>
+
+  <!-- Circular background -->
+  <circle cx="256" cy="256" r="256" fill="url(#bgGrad)"/>
+  <!-- Inner glow overlay -->
+  <circle cx="256" cy="256" r="256" fill="url(#glowGrad)"/>
+
+  <!-- Leaf / nutrition curve (fork shape stylized) -->
+  <!-- Fork handle -->
+  <rect x="240" y="320" width="32" height="100" rx="16" fill="white" opacity="0.95"/>
+
+  <!-- Fork head - three tines -->
+  <rect x="200" y="140" width="16" height="110" rx="8" fill="white" opacity="0.95"/>
+  <rect x="240" y="140" width="16" height="110" rx="8" fill="white" opacity="0.95"/>
+  <rect x="280" y="140" width="16" height="110" rx="8" fill="white" opacity="0.95"/>
+
+  <!-- Fork neck connector -->
+  <rect x="200" y="248" width="96" height="24" rx="12" fill="white" opacity="0.95"/>
+  <rect x="224" y="264" width="48" height="60" rx="24" fill="white" opacity="0.95"/>
+
+  <!-- Leaf accent (sparkle top right) -->
+  <circle cx="370" cy="142" r="22" fill="white" opacity="0.30"/>
+  <circle cx="370" cy="142" r="12" fill="white" opacity="0.45"/>
+
+  <!-- ── Text: NL initials as subtle watermark ── -->
+  <!-- Removed in favor of pure icon approach for better scalability -->
+</svg>
