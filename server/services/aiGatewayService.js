@@ -10,7 +10,7 @@ const aiCache = new LRUCache({
 });
 
 // Modelo principal
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6ItiqORVmWfguoQUvre7-9sEo7xTvB7pX1ubcpuPv0RQQ';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 // Modelo fallback
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
@@ -34,13 +34,10 @@ async function waitForGeminiRateLimit() {
   geminiRequestQueue.count++;
 }
 
-// Llamada HTTP a Gemini API con reintentos y fallback a gemini-flash-latest
-async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = null, mimeType = null, retries = 2, attempt = 1) {
-  let actualModel = model || 'gemini-2.0-flash';
-  if (actualModel === 'gemini-2.5-flash' || actualModel === 'gemini-1.5-flash' || actualModel === 'gemini-1.5-flash-vision') {
-    actualModel = 'gemini-2.0-flash';
-  }
-
+// Llamada HTTP a Gemini API con reintentos y fallback
+async function callGeminiAPI(prompt, model = 'gemini-2.5-flash', base64Data = null, mimeType = null, retries = 2, attempt = 1) {
+  let actualModel = model || 'gemini-2.5-flash';
+  
   await waitForGeminiRateLimit();
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${GEMINI_API_KEY}`;
@@ -76,9 +73,9 @@ async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = nu
     }
 
     if (!response.ok) {
-      if (actualModel !== 'gemini-flash-latest') {
-        console.warn(`⚠️ [Gemini API ${response.status}] ${actualModel} falló. Intentando fallback con gemini-flash-latest...`);
-        return callGeminiAPI(prompt, 'gemini-flash-latest', base64Data, mimeType, retries, 1);
+      if (actualModel !== 'gemini-2.5-flash') {
+        console.warn(`⚠️ [Gemini API ${response.status}] ${actualModel} falló. Intentando fallback con gemini-2.5-flash...`);
+        return callGeminiAPI(prompt, 'gemini-2.5-flash', base64Data, mimeType, retries, 1);
       }
       throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
     }
@@ -88,9 +85,9 @@ async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = nu
     if (!text) throw new Error('Gemini devolvió una respuesta vacía o formato inválido');
     return text;
   } catch (err) {
-    if (actualModel !== 'gemini-flash-latest' && !err.message.includes('gemini-flash-latest')) {
-      console.warn(`⚠️ [Gemini Fallback Secundario] Reintentando con gemini-flash-latest... Error previo: ${err.message}`);
-      return callGeminiAPI(prompt, 'gemini-flash-latest', base64Data, mimeType, retries, 1);
+    if (actualModel !== 'gemini-2.5-flash' && !err.message.includes('gemini-2.5-flash')) {
+      console.warn(`⚠️ [Gemini Fallback Secundario] Reintentando con gemini-2.5-flash... Error previo: ${err.message}`);
+      return callGeminiAPI(prompt, 'gemini-2.5-flash', base64Data, mimeType, retries, 1);
     }
     throw err;
   }
@@ -172,16 +169,16 @@ module.exports = {
     if (cached) return cached;
 
     // Registrar auditoría de inicio
-    const reqId = await loggingService.logAiRequest(userId, prompt, 'gemini-2.0-flash');
+    const reqId = await loggingService.logAiRequest(userId, prompt, 'gemini-2.5-flash');
 
     let responseText = '';
-    let modelUsed = 'gemini-2.0-flash';
+    let modelUsed = 'gemini-2.5-flash';
     let isFallback = false;
     let errorMsg = null;
 
     try {
       // Intentar modelo principal (Gemini)
-      responseText = await callGeminiAPI(prompt, 'gemini-2.0-flash', base64Image, mimeType);
+      responseText = await callGeminiAPI(prompt, 'gemini-2.5-flash', base64Image, mimeType);
     } catch (e) {
       console.warn('⚠️ Gemini falló en análisis de imagen. Intentando fallback a OpenAI (gpt-4o-mini)...', e.message);
       errorMsg = e.message;
@@ -225,10 +222,10 @@ module.exports = {
     if (cached) return cached;
 
     // Registrar solicitud
-    const reqId = await loggingService.logAiRequest(userId, userText, 'gemini-2.0-flash');
+    const reqId = await loggingService.logAiRequest(userId, userText, 'gemini-2.5-flash');
 
     let responseText = '';
-    let modelUsed = 'gemini-2.0-flash';
+    let modelUsed = 'gemini-2.5-flash';
     let isFallback = false;
     let errorMsg = null;
 
@@ -279,7 +276,7 @@ REGLAS DE INTERACCIÓN:
       const finalPrompt = `${systemPrompt}\n\nAquí está el contexto previo:\n${historyContext}\nPaciente: ${userText}\nNutri:`;
 
       // Intentar Gemini
-      responseText = await callGeminiAPI(finalPrompt, 'gemini-2.0-flash');
+      responseText = await callGeminiAPI(finalPrompt, 'gemini-2.5-flash');
     } catch (e) {
       console.warn('⚠️ Gemini falló en Chat. Intentando fallback a OpenAI (gpt-4o-mini)...', e.message);
       errorMsg = e.message;
@@ -314,7 +311,7 @@ REGLAS DE INTERACCIÓN:
   async getCompletion(prompt, base64Image = null, mimeType = null) {
     let responseText = '';
     try {
-      responseText = await callGeminiAPI(prompt, 'gemini-2.0-flash', base64Image, mimeType);
+      responseText = await callGeminiAPI(prompt, 'gemini-2.5-flash', base64Image, mimeType);
     } catch (e) {
       console.warn('⚠️ Gemini falló en consulta general. Intentando fallback a OpenAI...', e.message);
       try {
