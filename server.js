@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cron = require('node-cron');
 const { supabase } = require('./server/services/supabaseService');
 const aiGatewayService = require('./server/services/aiGatewayService');
 const queueService = require('./server/services/queueService');
 const usageLimitService = require('./server/services/usageLimitService');
 const voiceService = require('./server/services/voiceService');
+const pushService = require('./server/services/pushService');
 require('dotenv').config();
 
 const app = express();
@@ -705,6 +707,64 @@ app.post('/api/voice/assistant', optionalAuth, async (req, res) => {
 });
 
 // ==========================================
+// WEB PUSH NOTIFICATIONS
+// ==========================================
+
+// GET /api/push/vapid-key — devuelve la clave pública VAPID al cliente
+app.get('/api/push/vapid-key', (req, res) => {
+  if (!pushService.VAPID_PUBLIC_KEY) {
+    return res.status(503).json({ error: 'Push notifications no configuradas.' });
+  }
+  res.json({ publicKey: pushService.VAPID_PUBLIC_KEY });
+});
+
+// POST /api/push/subscribe — guarda la suscripción push del usuario
+app.post('/api/push/subscribe', optionalAuth, async (req, res) => {
+  const { subscription, prefs } = req.body;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: 'Suscripción inválida.' });
+  }
+  try {
+    const userId = req.user?.id || '00000000-0000-0000-0000-000000000000';
+    await pushService.saveSubscription(userId, subscription, prefs || {});
+    res.json({ success: true, message: 'Suscripción guardada.' });
+  } catch (err) {
+    console.error('[Push] Error al guardar suscripción:', err.message);
+    res.status(500).json({ error: 'Error al guardar suscripción: ' + err.message });
+  }
+});
+
+// POST /api/push/unsubscribe — elimina la suscripción del usuario
+app.post('/api/push/unsubscribe', async (req, res) => {
+  const { endpoint } = req.body;
+  if (!endpoint) return res.status(400).json({ error: 'Falta endpoint.' });
+  try {
+    await pushService.deleteSubscription(endpoint);
+    res.json({ success: true, message: 'Suscripción eliminada.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar suscripción: ' + err.message });
+  }
+});
+
+// POST /api/push/test — envía push de prueba (solo para testing)
+app.post('/api/push/test', optionalAuth, async (req, res) => {
+  const { subscription } = req.body;
+  if (!subscription) return res.status(400).json({ error: 'Falta suscripción.' });
+  try {
+    const webpush = require('web-push');
+    await webpush.sendNotification(subscription, JSON.stringify({
+      title: '🧪 Test NutricionLu',
+      body: '¡Las notificaciones están funcionando! 🎉',
+      icon: '/icons/icon-192.png',
+      url: '/'
+    }));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
 // RENDERIZADO ESTÁTICO (COMPATIBILIDAD SPA/PWA)
 // ==========================================
 const PUBLIC_DIR = path.join(__dirname, 'www');
@@ -719,5 +779,82 @@ app.use((req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 [SaaS Server] Ejecutándose en puerto ${PORT} (0.0.0.0)`);
   console.log(`📡 [SaaS Server] Estado de Redis: ${queueService.isRedisActive() ? 'CONECTADO (BullMQ activo)' : 'CAÍDO (Fallback síncrono activo)'}`);
-  console.log(`📂 [SaaS Server] Carpeta pública: ${PUBLIC_DIR}\n`);
+  console.log(`📂 [SaaS Server] Carpeta pública: ${PUBLIC_DIR}`);
+  console.log(`🔔 [SaaS Server] Web Push: ${pushService.VAPID_PUBLIC_KEY ? 'ACTIVO' : 'SIN CONFIGURAR'}\n`);
+
+  // ==========================================
+  // SCHEDULER DE NOTIFICACIONES (node-cron)
+  // Zona horaria: America/Argentina/Buenos_Aires
+  // ==========================================
+  const TZ = { timezone: 'America/Argentina/Buenos_Aires' };
+
+  // 08:00 — Recordatorio desayuno
+  cron.schedule('0 8 * * *', () => {
+    pushService.sendPushToAll('pref_desayuno', {
+      title: '🌅 ¡Buenos días!',
+      body: '¿Ya cargaste tu desayuno? Empezá el día registrando lo que comés.',
+      url: '/'
+    });
+  }, TZ);
+
+  // 12:30 — Recordatorio almuerzo
+  cron.schedule('30 12 * * *', () => {
+    pushService.sendPushToAll('pref_almuerzo', {
+      title: '☀️ Hora del almuerzo',
+      body: 'Registrá tu almuerzo en NutricionLu para seguir tu progreso.',
+      url: '/'
+    });
+  }, TZ);
+
+  // 16:00 — Recordatorio merienda
+  cron.schedule('0 16 * * *', () => {
+    pushService.sendPushToAll('pref_merienda', {
+      title: '🫖 ¡Hora de la merienda!',
+      body: 'No te olvides de registrar tu merienda.',
+      url: '/'
+    });
+  }, TZ);
+
+  // 20:00 — Recordatorio cena
+  cron.schedule('0 20 * * *', () => {
+    pushService.sendPushToAll('pref_cena', {
+      title: '🌙 Hora de cenar',
+      body: 'Cargá tu cena antes de que se te olvide.',
+      url: '/'
+    });
+  }, TZ);
+
+  // 09:00 y 21:00 — Recordatorio suplementos
+  cron.schedule('0 9 * * *', () => {
+    pushService.sendPushToAll('pref_suplementos', {
+      title: '💊 Suplementos de mañana',
+      body: '¿Ya tomaste tus suplementos de la mañana?',
+      url: '/'
+    });
+  }, TZ);
+  cron.schedule('0 21 * * *', () => {
+    pushService.sendPushToAll('pref_suplementos', {
+      title: '💊 Suplementos nocturnos',
+      body: '¿Tomaste tus suplementos de la noche?',
+      url: '/'
+    });
+  }, TZ);
+
+  // 11:00 y 17:00 — Recordatorio hidratación
+  cron.schedule('0 11 * * *', () => {
+    pushService.sendPushToAll('pref_hidratacion', {
+      title: '💧 ¡Hidratate!',
+      body: 'Recordá tomar agua. Tu cuerpo te lo agradece.',
+      url: '/'
+    });
+  }, TZ);
+  cron.schedule('0 17 * * *', () => {
+    pushService.sendPushToAll('pref_hidratacion', {
+      title: '💧 ¿Tomaste suficiente agua hoy?',
+      body: 'Registrá tu hidratación en la app.',
+      url: '/'
+    });
+  }, TZ);
+
+  console.log('⏰ [Scheduler] Recordatorios push programados (ARG timezone).\n');
 });
