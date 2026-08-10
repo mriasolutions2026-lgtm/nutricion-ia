@@ -1,7 +1,7 @@
 const { supabase } = require('./supabaseService');
 require('dotenv').config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6ItiqORVmWfguoQUvre7-9sEo7xTvB7pX1ubcpuPv0RQQ';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
 // Base de datos de macros de referencia ANMAT / ArgenFoods (Universidad de Luján / Argentina)
@@ -139,10 +139,30 @@ function fetchWithTimeout(url, options, timeoutMs = 8000) {
   ]);
 }
 
-// Llamada HTTP a Gemini (Gemini 2.0 Flash con fallback a gemini-flash-latest)
-async function callGeminiAudio(prompt, base64Audio = null, mimeType = null, modelName = 'gemini-2.0-flash') {
-  const model = (modelName === 'gemini-2.5-flash') ? 'gemini-2.0-flash' : (modelName || 'gemini-2.0-flash');
+// Rate limiter simple: máximo 14 llamadas por minuto a Gemini (plan gratuito = 15 RPM)
+const geminiRequestQueue = { count: 0, resetAt: Date.now() + 60000 };
+async function waitForGeminiRateLimit() {
+  const now = Date.now();
+  if (now > geminiRequestQueue.resetAt) {
+    geminiRequestQueue.count = 0;
+    geminiRequestQueue.resetAt = now + 60000;
+  }
+  if (geminiRequestQueue.count >= 14) {
+    const waitMs = geminiRequestQueue.resetAt - Date.now() + 500;
+    console.warn(`⏳ [Voice RateLimit] Límite Gemini alcanzado. Esperando ${Math.round(waitMs/1000)}s...`);
+    await new Promise(r => setTimeout(r, waitMs));
+    geminiRequestQueue.count = 0;
+    geminiRequestQueue.resetAt = Date.now() + 60000;
+  }
+  geminiRequestQueue.count++;
+}
+
+// Llamada HTTP a Gemini con backoff exponencial en 429
+async function callGeminiAudio(prompt, base64Audio = null, mimeType = null, modelName = 'gemini-2.5-flash', attempt = 1) {
+  const model = modelName || 'gemini-2.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+
+  await waitForGeminiRateLimit();
 
   let parts = [{ text: prompt }];
   if (base64Audio && mimeType) {
@@ -165,6 +185,14 @@ async function callGeminiAudio(prompt, base64Audio = null, mimeType = null, mode
       }
     })
   }, 8000);
+
+  // Backoff exponencial para 429: esperar 5s, 10s, 20s antes de reintentar
+  if (response.status === 429 && attempt <= 3) {
+    const waitMs = Math.pow(2, attempt) * 2500; // 5s, 10s, 20s
+    console.warn(`⚠️ [Gemini 429] Rate limit. Reintentando en ${waitMs/1000}s... (intento ${attempt}/3)`);
+    await new Promise(r => setTimeout(r, waitMs));
+    return callGeminiAudio(prompt, base64Audio, mimeType, modelName, attempt + 1);
+  }
 
   if (!response.ok) {
     throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
@@ -216,29 +244,35 @@ async function callOpenAIAudio(prompt, base64Audio = null, mimeType = null) {
   return text;
 }
 
-// Lógica de Fallback de 4 pasos (Gemini 2.5 Flash -> Gemini Flash Latest -> GPT-4o-mini -> Failure)
+// Lógica de Fallback de 4 pasos con backoff entre intentos
 async function executeLLMWithFallback(prompt, base64Audio, mimeType, validatorFn) {
   let lastError = null;
 
-  // 1. Intento 1: Gemini 2.0 Flash (8s timeout)
+  // 1. Intento 1: Gemini 2.5 Flash (con backoff automático en 429)
   try {
-    const text = await callGeminiAudio(prompt, base64Audio, mimeType, 'gemini-2.0-flash');
+    const text = await callGeminiAudio(prompt, base64Audio, mimeType, 'gemini-2.5-flash');
     const parsed = validatorFn(text);
-    if (parsed) return { result: parsed, provider: 'gemini-2.0-flash' };
+    if (parsed) return { result: parsed, provider: 'gemini-2.5-flash' };
   } catch (err1) {
-    console.warn('⚠️ [Voice LLM] Intento 1 (Gemini 2.0 Flash) falló:', err1.message);
+    console.warn('⚠️ [Voice LLM] Intento 1 (Gemini 2.5 Flash) falló:', err1.message);
     lastError = err1;
   }
 
-  // 2. Intento 2: Reintento Gemini con gemini-flash-latest
+  // Pausa de 3s entre intentos para no saturar la API
+  await new Promise(r => setTimeout(r, 3000));
+
+  // 2. Intento 2: Reintento Gemini con gemini-2.5-flash
   try {
-    const text = await callGeminiAudio(prompt, base64Audio, mimeType, 'gemini-flash-latest');
+    const text = await callGeminiAudio(prompt, base64Audio, mimeType, 'gemini-2.5-flash');
     const parsed = validatorFn(text);
-    if (parsed) return { result: parsed, provider: 'gemini-flash-latest' };
+    if (parsed) return { result: parsed, provider: 'gemini-2.5-flash' };
   } catch (err2) {
-    console.warn('⚠️ [Voice LLM] Intento 2 (Gemini Flash Latest) falló:', err2.message);
+    console.warn('⚠️ [Voice LLM] Intento 2 (Gemini 2.5 Flash Reintento) falló:', err2.message);
     lastError = err2;
   }
+
+  // Pausa de 3s antes del fallback externo
+  await new Promise(r => setTimeout(r, 3000));
 
   // 3. Intento 3: Fallback a OpenAI gpt-4o-mini
   try {
@@ -250,7 +284,7 @@ async function executeLLMWithFallback(prompt, base64Audio, mimeType, validatorFn
     lastError = err3;
   }
 
-  // 4. Intento 4: Todos los modelos IA remotos fallaron
+  // 4. Todos los modelos fallaron
   throw new Error(lastError ? lastError.message : 'No se pudo procesar la voz con los proveedores de IA disponibles.');
 }
 
