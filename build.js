@@ -16,6 +16,8 @@ const filesToCopy = [
   'granada.png',
   'cerebro-ia.png',
   'privacy.html',
+  'health.html',
+  'push-client.js',
   '_headers',
   '_redirects'
 ];
