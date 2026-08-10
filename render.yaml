@@ -16,3 +16,9 @@ services:
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
+      - key: VAPID_PUBLIC_KEY
+        value: BK7hyP5a2tn59wG3WdsiKPT4BO09_KtlUAsMHVGZ3w1f-DV72VvCOfk3M08aVUsU3U0WrOzES9C7qpz5Hv1_iA0
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_EMAIL
+        value: mailto:contacto@nutricionlu.com
