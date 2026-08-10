@@ -16,12 +16,32 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
 // --- HELPERS DE LLAMADAS API ---
 
+// Rate limiter simple: máximo 14 llamadas por minuto a Gemini (plan gratuito = 15 RPM)
+const geminiRequestQueue = { count: 0, resetAt: Date.now() + 60000 };
+async function waitForGeminiRateLimit() {
+  const now = Date.now();
+  if (now > geminiRequestQueue.resetAt) {
+    geminiRequestQueue.count = 0;
+    geminiRequestQueue.resetAt = now + 60000;
+  }
+  if (geminiRequestQueue.count >= 14) {
+    const waitMs = geminiRequestQueue.resetAt - Date.now() + 500;
+    console.warn(`⏳ [AI RateLimit] Límite Gemini alcanzado. Esperando ${Math.round(waitMs/1000)}s...`);
+    await new Promise(r => setTimeout(r, waitMs));
+    geminiRequestQueue.count = 0;
+    geminiRequestQueue.resetAt = Date.now() + 60000;
+  }
+  geminiRequestQueue.count++;
+}
+
 // Llamada HTTP a Gemini API con reintentos y fallback a gemini-flash-latest
-async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = null, mimeType = null, retries = 2) {
+async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = null, mimeType = null, retries = 2, attempt = 1) {
   let actualModel = model || 'gemini-2.0-flash';
   if (actualModel === 'gemini-2.5-flash' || actualModel === 'gemini-1.5-flash' || actualModel === 'gemini-1.5-flash-vision') {
     actualModel = 'gemini-2.0-flash';
   }
+
+  await waitForGeminiRateLimit();
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${GEMINI_API_KEY}`;
   
@@ -49,15 +69,16 @@ async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = nu
     });
 
     if (response.status === 429 && retries > 0) {
-      console.warn(`⚠️ [Gemini API 429 Rate Limit] Reintentando en 1.5s... (${retries} reintentos restantes)`);
-      await new Promise(r => setTimeout(r, 1500));
-      return callGeminiAPI(prompt, actualModel, base64Data, mimeType, retries - 1);
+      const waitMs = Math.pow(2, attempt) * 2500; // 5s, 10s
+      console.warn(`⚠️ [Gemini API 429 Rate Limit] Reintentando en ${waitMs/1000}s... (${retries} reintentos restantes)`);
+      await new Promise(r => setTimeout(r, waitMs));
+      return callGeminiAPI(prompt, actualModel, base64Data, mimeType, retries - 1, attempt + 1);
     }
 
     if (!response.ok) {
       if (actualModel !== 'gemini-flash-latest') {
         console.warn(`⚠️ [Gemini API ${response.status}] ${actualModel} falló. Intentando fallback con gemini-flash-latest...`);
-        return callGeminiAPI(prompt, 'gemini-flash-latest', base64Data, mimeType, retries);
+        return callGeminiAPI(prompt, 'gemini-flash-latest', base64Data, mimeType, retries, 1);
       }
       throw new Error(`Gemini API Error: ${response.status} ${response.statusText}`);
     }
@@ -69,11 +90,12 @@ async function callGeminiAPI(prompt, model = 'gemini-2.0-flash', base64Data = nu
   } catch (err) {
     if (actualModel !== 'gemini-flash-latest' && !err.message.includes('gemini-flash-latest')) {
       console.warn(`⚠️ [Gemini Fallback Secundario] Reintentando con gemini-flash-latest... Error previo: ${err.message}`);
-      return callGeminiAPI(prompt, 'gemini-flash-latest', base64Data, mimeType, retries);
+      return callGeminiAPI(prompt, 'gemini-flash-latest', base64Data, mimeType, retries, 1);
     }
     throw err;
   }
 }
+
 
 // Llamada HTTP a OpenAI API (Fallback) con reintentos automáticos
 async function callOpenAIAPI(prompt, base64Data = null, mimeType = null, retries = 1) {
